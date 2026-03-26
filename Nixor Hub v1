@@ -1,0 +1,251 @@
+-- [[ Nixor Hub v1 | النسخة المدمجة بالصورة والترحيب 👑 ]] --
+
+-- 1. كود الترحيب المطور مع الصورة والخلفية المتحركة 🌈
+local function WelcomePlayer()
+    local p = game.Players.LocalPlayer
+    local gui = Instance.new("ScreenGui", p.PlayerGui)
+    gui.Name = "NixorWelcomeRainbow"
+    gui.IgnoreGuiInset = true
+    
+    local frame = Instance.new("Frame", gui)
+    frame.Size = UDim2.new(1, 0, 1, 0)
+    frame.BackgroundTransparency = 0.2
+    
+    -- إضافة صورتك الشخصية في منتصف الترحيب ✅
+    local profileImg = Instance.new("ImageLabel", frame)
+    profileImg.Size = UDim2.new(0, 200, 0, 200)
+    profileImg.Position = UDim2.new(0.5, -100, 0.4, -100)
+    profileImg.Image = "rbxthumb://type=Asset&id=111349449029153&w=420&h=420"
+    profileImg.BackgroundTransparency = 1
+    Instance.new("UICorner", profileImg).CornerRadius = UDim.new(1, 0) -- جعلها دائرية
+    
+    local text = Instance.new("TextLabel", frame)
+    text.Size = UDim2.new(1, 0, 0, 50)
+    text.Position = UDim2.new(0, 0, 0.7, 0)
+    text.BackgroundTransparency = 1
+    text.Text = "Nixor Hub | سكربت المطور نيكسور v1 👑"
+    text.TextColor3 = Color3.new(1, 1, 1)
+    text.TextSize = 35
+    text.Font = Enum.Font.SourceSansBold
+    text.ZIndex = 2
+
+    task.spawn(function()
+        local hue = 0
+        while gui.Parent do
+            hue = hue + 1/255
+            if hue > 1 then hue = 0 end
+            frame.BackgroundColor3 = Color3.fromHSV(hue, 0.7, 0.7)
+            task.wait()
+        end
+    end)
+    game:GetService("Debris"):AddItem(gui, 4)
+end
+WelcomePlayer()
+
+-- 2. تحميل مكتبة Orion
+local OrionLib = loadstring(game:HttpGet('https://raw.githubusercontent.com/jensonhirst/Orion/main/source'))()
+
+OrionLib:MakeNotification({
+    Name = "نظام النيكسور",
+    Content = "تم إضافة تبويبات الرفاهية الجديدة ✅💎",
+    Image = "rbxassetid://4483345998",
+    Time = 5
+})
+
+local Window = OrionLib:MakeWindow({
+    Name = "Nixor Hub | سكربت المطور نيكسور v1", 
+    HidePremium = false, 
+    SaveConfig = true, 
+    ConfigFolder = "NixorConfig"
+})
+
+-- متغيرات التحكم
+_G.FlySpeed = 50
+local flying, espActive, noclip, killFling, bangActive = false, false, false, false, false
+local autoClickActive, autoJumpActive, timerRunning, antiBangActive = false, false, false, false
+local cageActive, serverShake, startTime = false, false, 0
+local autoCollectCoins = false
+local targetName = ""
+local UIS = game:GetService("UserInputService")
+
+-- 3. تبويب الرئيسية
+local MainTab = Window:MakeTab({Name = "الرئيسية", Icon = "rbxassetid://4483345998"})
+MainTab:AddToggle({Name = "اختراق الجدران (Noclip)", Default = false, Callback = function(Value) noclip = Value task.spawn(function() while noclip do pcall(function() for _, v in pairs(game.Players.LocalPlayer.Character:GetDescendants()) do if v:IsA("BasePart") then v.CanCollide = false end end end) task.wait() end end) end})
+MainTab:AddToggle({Name = "تفعيل الطيران (Fly)", Default = false, Callback = function(Value) flying = Value local char = game.Players.LocalPlayer.Character if flying then local root = char:WaitForChild("HumanoidRootPart") local bg = Instance.new("BodyGyro", root); bg.P = 9e4; bg.maxTorque = Vector3.new(9e9, 9e9, 9e9); bg.Name = "NixorFlyGyro"; local bv = Instance.new("BodyVelocity", root); bv.velocity = Vector3.new(0, 0.1, 0); bv.maxForce = Vector3.new(9e9, 9e9, 9e9); bv.Name = "NixorFlyVel"; task.spawn(function() local camera = workspace.CurrentCamera while flying do local moveDir = char.Humanoid.MoveDirection bv.velocity = (camera.CFrame.LookVector * (moveDir.Z * -_G.FlySpeed)) + (camera.CFrame.RightVector * (moveDir.X * _G.FlySpeed)) if moveDir == Vector3.new(0,0,0) then bv.velocity = Vector3.new(0, 0.1, 0) end bg.cframe = camera.CFrame task.wait() end if root:FindFirstChild("NixorFlyGyro") then root.NixorFlyGyro:Destroy() end if root:FindFirstChild("NixorFlyVel") then root.NixorFlyVel:Destroy() end end) end end})
+MainTab:AddSlider({Name = "سرعة الطيران", Min = 10, Max = 500, Default = 50, Increment = 1, ValueName = "Speed", Callback = function(Value) _G.FlySpeed = Value end})
+MainTab:AddSlider({Name = "سرعة المشي", Min = 16, Max = 300, Default = 16, Increment = 1, ValueName = "Speed", Callback = function(Value) game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = Value end})
+MainTab:AddSlider({Name = "قوة القفز", Min = 50, Max = 500, Default = 50, Increment = 1, ValueName = "Power", Callback = function(Value) game.Players.LocalPlayer.Character.Humanoid.UseJumpPower = true game.Players.LocalPlayer.Character.Humanoid.JumpPower = Value end})
+MainTab:AddButton({Name = "تفعيل الاختفاء", Callback = function() for _, v in pairs(game.Players.LocalPlayer.Character:GetDescendants()) do if v:IsA("BasePart") or v:IsA("Decal") then if v.Name ~= "HumanoidRootPart" then v.Transparency = 1 end end end end})
+MainTab:AddButton({Name = "إظهار الشخصية", Callback = function() for _, v in pairs(game.Players.LocalPlayer.Character:GetDescendants()) do if v:IsA("BasePart") or v:IsA("Decal") then v.Transparency = 0 end end end})
+
+-- [تبويب] المظهر الشخصي 👕
+local AvatarTab = Window:MakeTab({Name = "المظهر الشخصي 👕", Icon = "rbxassetid://4483345998"})
+AvatarTab:AddButton({Name = "رأس مخفي (Headless)", Callback = function() pcall(function() game.Players.LocalPlayer.Character.Head.Transparency = 1 if game.Players.LocalPlayer.Character.Head:FindFirstChild("face") then game.Players.LocalPlayer.Character.Head.face.Transparency = 1 end end) end})
+AvatarTab:AddButton({Name = "إضافة هالة النار 🔥", Callback = function() local p = Instance.new("Fire", game.Players.LocalPlayer.Character.HumanoidRootPart); p.Size = 10; p.Name = "NixorAura" end})
+AvatarTab:AddButton({Name = "حذف الرجل اليسار 🦵", Callback = function() pcall(function() local char = game.Players.LocalPlayer.Character if char:FindFirstChild("Left Leg") then char["Left Leg"]:Destroy() elseif char:FindFirstChild("LeftUpperLeg") then char["LeftUpperLeg"]:Destroy() end end) end})
+AvatarTab:AddButton({Name = "حذف الرجل اليمين 🦵", Callback = function() pcall(function() local char = game.Players.LocalPlayer.Character if char:FindFirstChild("Right Leg") then char["Right Leg"]:Destroy() elseif char:FindFirstChild("RightUpperLeg") then char["RightUpperLeg"]:Destroy() end end) end})
+AvatarTab:AddButton({Name = "إزالة التأثيرات", Callback = function() for _, v in pairs(game.Players.LocalPlayer.Character.HumanoidRootPart:GetChildren()) do if v.Name == "NixorAura" then v:Destroy() end end end})
+
+-- [تبويب] العالم المرئي 🌌
+local VisualTab = Window:MakeTab({Name = "العالم المرئي 🌌", Icon = "rbxassetid://4483345998"})
+VisualTab:AddSlider({Name = "مجال الرؤية (FOV)", Min = 70, Max = 120, Default = 70, Increment = 1, Callback = function(V) workspace.CurrentCamera.FieldOfView = V end})
+VisualTab:AddButton({Name = "سماء النجوم 🌌", Callback = function() local s = Instance.new("Sky", game:GetService("Lighting")); s.SkyboxBk = "rbxassetid://271042516"; s.SkyboxDn = "rbxassetid://271077243"; s.SkyboxFt = "rbxassetid://271042556"; s.SkyboxLf = "rbxassetid://271042310"; s.SkyboxRt = "rbxassetid://271042467"; s.SkyboxUp = "rbxassetid://271077958" end})
+VisualTab:AddButton({Name = "تفعيل الشادر (RTX Mod) ✨", Callback = function()
+    local lighting = game:GetService("Lighting")
+    lighting.Brightness = 2.5
+    lighting.GlobalShadows = true
+    lighting.EnvironmentDiffuseScale = 1
+    lighting.EnvironmentSpecularScale = 1
+    local bloom = Instance.new("BloomEffect", lighting)
+    bloom.Intensity = 0.5; bloom.Size = 24; bloom.Threshold = 0.9
+    local sunRays = Instance.new("SunRaysEffect", lighting)
+    sunRays.Intensity = 0.1; sunRays.Spread = 1
+    local colorCorr = Instance.new("ColorCorrectionEffect", lighting)
+    colorCorr.Contrast = 0.1; colorCorr.Saturation = 0.15
+end})
+
+-- [تبويب] الذكاء والاحتراف 🧠
+local ProTab = Window:MakeTab({Name = "الذكاء والاحتراف 🧠", Icon = "rbxassetid://4483345998"})
+ProTab:AddToggle({
+    Name = "تجميع العملات تلقائياً 💰",
+    Default = false,
+    Callback = function(Value)
+        autoCollectCoins = Value
+        task.spawn(function()
+            while autoCollectCoins do
+                pcall(function()
+                    for _, obj in pairs(workspace:GetDescendants()) do
+                        if obj:IsA("TouchTransmitter") and obj.Parent:IsA("BasePart") then
+                            firetouchinterest(game.Players.LocalPlayer.Character.HumanoidRootPart, obj.Parent, 0)
+                            firetouchinterest(game.Players.LocalPlayer.Character.HumanoidRootPart, obj.Parent, 1)
+                        end
+                    end
+                end)
+                task.wait(0.1)
+            end
+        end)
+    end
+})
+
+-- 4. تبويب التخريب 👾
+local BangTab = Window:MakeTab({Name = "التخريب 👾", Icon = "rbxassetid://4483345998"})
+BangTab:AddTextbox({Name = "اسم الهدف (يدوي)", Default = "", TextDisappear = false, Callback = function(Value) targetName = Value end})
+local function getPlayerNames() local list = {} for _, v in pairs(game.Players:GetPlayers()) do if v ~= game.Players.LocalPlayer then table.insert(list, v.Name) end end return list end
+local PlayerDropdown = BangTab:AddDropdown({Name = "اختر الضحية من القائمة", Default = "", Options = getPlayerNames(), Callback = function(Value) targetName = Value end})
+BangTab:AddButton({Name = "تحديث القائمة", Callback = function() PlayerDropdown:Refresh(getPlayerNames(), true) end})
+
+-- [ الإضافة الجديدة: ميزة التجسس ]
+BangTab:AddToggle({
+    Name = "تجسس على الهدف 👀",
+    Default = false,
+    Callback = function(Value)
+        local lp = game.Players.LocalPlayer
+        local cam = workspace.CurrentCamera
+        if Value then
+            pcall(function()
+                for _, pl in pairs(game.Players:GetPlayers()) do
+                    if pl.Name:lower():sub(1, #targetName) == targetName:lower() then
+                        cam.CameraSubject = pl.Character.Humanoid
+                    end
+                end
+            end)
+        else
+            cam.CameraSubject = lp.Character.Humanoid
+        end
+    end
+})
+
+BangTab:AddButton({Name = "سحب الهدف (Bring)", Callback = function() pcall(function() for _, pl in pairs(game.Players:GetPlayers()) do if pl.Name:lower():sub(1, #targetName) == targetName:lower() then game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = pl.Character.HumanoidRootPart.CFrame end end end) end})
+BangTab:AddToggle({Name = "حبس وتدوير (Cage)", Default = false, Callback = function(V) cageActive = V task.spawn(function() while cageActive do pcall(function() for _, pl in pairs(game.Players:GetPlayers()) do if pl.Name:lower():sub(1, #targetName) == targetName:lower() then game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = pl.Character.HumanoidRootPart.CFrame * CFrame.new(math.cos(tick()*10)*3, 0, math.sin(tick()*10)*3) end end end) task.wait() end end) end})
+BangTab:AddToggle({Name = "تطير عشوائي (Shake)", Default = false, Callback = function(V) serverShake = V task.spawn(function() while serverShake do pcall(function() local p = game.Players:GetPlayers(); local r = p[math.random(1,#p)]; if r ~= game.Players.LocalPlayer then game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = r.Character.HumanoidRootPart.CFrame end end) task.wait(0.1) end end) end})
+BangTab:AddButton({Name = "تفعيل البانج 🔞", Callback = function() local p = game.Players.LocalPlayer if bangActive then bangActive = false return end for _, pl in pairs(game.Players:GetPlayers()) do if pl.Name:lower():sub(1, #targetName) == targetName:lower() then bangActive = true task.spawn(function() while bangActive do pcall(function() p.Character.HumanoidRootPart.CFrame = pl.Character.HumanoidRootPart.CFrame * CFrame.new(0, 0, 1.1) task.wait(0.1) p.Character.HumanoidRootPart.CFrame = pl.Character.HumanoidRootPart.CFrame * CFrame.new(0, 0, 0.4) end) task.wait(0.1) end end) end end end})
+BangTab:AddToggle({Name = "تطير القتل (Fling V2)", Default = false, Callback = function(Value) killFling = Value local root = game.Players.LocalPlayer.Character.HumanoidRootPart if killFling then local bAV = Instance.new("BodyAngularVelocity", root); bAV.Name = "NixorFlingVel"; bAV.AngularVelocity = Vector3.new(0, 999999, 0); bAV.MaxTorque = Vector3.new(0, math.huge, 0) task.spawn(function() while killFling do pcall(function() for _, pl in pairs(game.Players:GetPlayers()) do if pl.Name:lower():sub(1, #targetName) == targetName:lower() then root.CFrame = pl.Character.HumanoidRootPart.CFrame end end end) task.wait() end if root:FindFirstChild("NixorFlingVel") then root.NixorFlingVel:Destroy() end end) end end})
+BangTab:AddToggle({Name = "رؤية اللاعبين (ESP)", Default = false, Callback = function(Value) espActive = Value task.spawn(function() while espActive do for _, player in pairs(game.Players:GetPlayers()) do if player ~= game.Players.LocalPlayer and player.Character and not player.Character:FindFirstChild("NixorESP") then Instance.new("Highlight", player.Character).Name = "NixorESP" end end task.wait(1) end for _, player in pairs(game.Players:GetPlayers()) do if player.Character and player.Character:FindFirstChild("NixorESP") then player.Character.NixorESP:Destroy() end end end) end})
+
+-- 5. تبويب إعدادات العالم 🌍
+local WorldTab = Window:MakeTab({Name = "إعدادات العالم 🌍", Icon = "rbxassetid://4483345998"})
+WorldTab:AddButton({Name = "إضاءة كاملة", Callback = function() game:GetService("Lighting").Brightness = 2 game:GetService("Lighting").ClockTime = 14 game:GetService("Lighting").GlobalShadows = false end})
+WorldTab:AddButton({Name = "إزالة الضباب", Callback = function() game:GetService("Lighting").FogEnd = 9e9 end})
+WorldTab:AddToggle({Name = "وضع الليل", Default = false, Callback = function(V) game:GetService("Lighting").ClockTime = V and 0 or 14 end})
+WorldTab:AddButton({Name = "شفافية الجدران (X-Ray)", Callback = function() for _, obj in pairs(workspace:GetDescendants()) do if obj:IsA("BasePart") and not obj.Parent:FindFirstChild("Humanoid") then obj.Transparency = 0.5 end end end})
+
+-- 6. تبويب الأداء 📊
+local PerformanceTab = Window:MakeTab({Name = "الأداء 📊", Icon = "rbxassetid://4483345998"})
+PerformanceTab:AddToggle({Name = "إحصائيات (FPS, Ping, Players)", Default = false, Callback = function(Value) 
+    local coreGui = game:GetService("CoreGui")
+    if Value then 
+        local sg = Instance.new("ScreenGui", coreGui); sg.Name = "NixorStatsLabel"; 
+        local label = Instance.new("TextLabel", sg); label.Size = UDim2.new(0, 230, 0, 80); label.Position = UDim2.new(0, 10, 0, 10); label.BackgroundTransparency = 0.5; label.BackgroundColor3 = Color3.new(0, 0, 0); label.TextColor3 = Color3.new(1, 1, 1); label.TextSize = 16;
+        task.spawn(function() while sg.Parent do 
+            local fps = math.floor(1/game:GetService("RunService").RenderStepped:Wait())
+            local ping = math.floor(game:GetService("Stats").Network.ServerStatsItem["Data Ping"]:GetValue())
+            label.Text = "⚡ FPS: "..fps.."\n📶 Ping: "..ping.."ms\n👥 Players: "..#game.Players:GetPlayers().."/"..game.Players.MaxPlayers task.wait(0.5) 
+        end end) 
+    else if coreGui:FindFirstChild("NixorStatsLabel") then coreGui.NixorStatsLabel:Destroy() end end 
+end})
+
+-- 7. تبويب صملة ⏳
+local SamlaTab = Window:MakeTab({Name = "صملة ⏳", Icon = "rbxassetid://4483345998"})
+local TimerLabel = SamlaTab:AddLabel("وقت الصملة: 00:00:00")
+SamlaTab:AddToggle({Name = "عداد الوقت ⏱️", Default = false, Callback = function(V) timerRunning = V if V then startTime = tick() task.spawn(function() while timerRunning do local d = tick()-startTime TimerLabel:Set(string.format("وقت الصملة: %02d:%02d:%02d", math.floor(d/3600), math.floor((d%3600)/60), math.floor(d%60))) task.wait(1) end end) end end})
+SamlaTab:AddToggle({Name = "وضع البطاطس (Potato) 🖥️", Default = false, Callback = function(V) if V then settings().Rendering.QualityLevel = 1 for _, v in pairs(game:GetDescendants()) do if v:IsA("PostEffect") then v.Enabled = false end end end end})
+SamlaTab:AddButton({Name = "منع الطرد (Anti-AFK)", Callback = function() game:GetService("Players").LocalPlayer.Idled:Connect(function() game:GetService("VirtualUser"):ClickButton2(Vector2.new()) end) end})
+SamlaTab:AddToggle({Name = "أوتو كليكر", Default = false, Callback = function(V) autoClickActive = V task.spawn(function() while autoClickActive do game:GetService("VirtualUser"):ClickButton1(Vector2.new()) task.wait(0.1) end end) end})
+SamlaTab:AddToggle({Name = "القفز التلقائي", Default = false, Callback = function(V) autoJumpActive = V task.spawn(function() while autoJumpActive do pcall(function() game.Players.LocalPlayer.Character.Humanoid:ChangeState(1) end) task.wait(0.2) end end) end})
+SamlaTab:AddToggle({Name = "وضع الهيبة (Anti-AFK) 👑", Default = false, Callback = function(V) _G.NixorDance = V task.spawn(function() while _G.NixorDance do pcall(function() local dances = {"/e dance", "/e dance2", "/e dance3"} local randomDance = dances[math.random(1, #dances)] game:GetService("ReplicatedStorage").DefaultChatSystemChatEvents.SayMessageRequest:FireServer(randomDance, "All") game:GetService("Players").LocalPlayer.Character.Humanoid:Move(Vector3.new(0,0,0.01)) end) task.wait(180) end end) end})
+SamlaTab:AddToggle({Name = "إزالة الأنسجة (FPS Boost) 🚀", Default = false, Callback = function(V) for _, v in pairs(game:GetDescendants()) do if v:IsA("Texture") or v:IsA("Decal") then v.Transparency = V and 1 or 0 end end end})
+SamlaTab:AddToggle({Name = "الشاشة السوداء (Black Screen)", Default = false, Callback = function(V) if V then local sg = Instance.new("ScreenGui", game:GetService("CoreGui")); sg.Name = "SamlaBlackout"; local f = Instance.new("Frame", sg); f.Size = UDim2.new(1,0,1,0); f.BackgroundColor3 = Color3.new(0,0,0); game:GetService("RunService"):Set3dRenderingEnabled(false) else if game:GetService("CoreGui"):FindFirstChild("SamlaBlackout") then game:GetService("CoreGui").SamlaBlackout:Destroy() end game:GetService("RunService"):Set3dRenderingEnabled(true) end end})
+SamlaTab:AddButton({Name = "إعادة الاتصال التلقائي", Callback = function() game:GetService("CoreGui").RobloxPromptGui.promptOverlay.ChildAdded:Connect(function(c) if c.Name == 'ErrorPrompt' then game:GetService("TeleportService"):Teleport(game.PlaceId) end end) end})
+
+-- 8. تبويب الحماية 🛡️
+local ProtectTab = Window:MakeTab({Name = "الحماية 🛡️", Icon = "rbxassetid://4483345998"})
+ProtectTab:AddToggle({Name = "صائد البانج (Anti-Bang Kill)", Default = false, Callback = function(V) antiBangActive = V task.spawn(function() while antiBangActive do pcall(function() local my = game.Players.LocalPlayer.Character.HumanoidRootPart for _, p in pairs(game.Players:GetPlayers()) do if p ~= game.Players.LocalPlayer and p.Character then if (my.Position - p.Character.HumanoidRootPart.Position).Magnitude < 2.5 then local b = Instance.new("BodyAngularVelocity", my); b.AngularVelocity = Vector3.new(0, 999999, 0); b.MaxTorque = Vector3.new(0, math.huge, 0); my.CFrame = p.Character.HumanoidRootPart.CFrame; task.wait(0.5); b:Destroy() end end end end) task.wait(0.1) end end) end})
+ProtectTab:AddButton({Name = "حماية التطير (Anti-Fling)", Callback = function() task.spawn(function() while task.wait() do pcall(function() for _, v in pairs(game.Players.LocalPlayer.Character:GetDescendants()) do if v:IsA("BasePart") then v.CanTouch = false end end end) end end) end})
+
+-- 11. إضافة قسم الـ Lag الجديد ⚡ (تم الدمج هنا)
+local LagTab = Window:MakeTab({Name = "قسم الـ Lag ⚡", Icon = "rbxassetid://4483345998"})
+
+LagTab:AddToggle({
+    Name = "تعليق كامل (Lag Switch) 🛑",
+    Default = false,
+    Callback = function(Value)
+        if Value then
+            settings().Network.IncomingReplicationLag = 1000
+            OrionLib:MakeNotification({Name = "Nixor Hub", Content = "تم التعليق! لا تطول عشان ما تطرد ⚠️", Time = 3})
+        else
+            settings().Network.IncomingReplicationLag = 0
+            OrionLib:MakeNotification({Name = "Nixor Hub", Content = "رجعت الحالة طبيعية ✅", Time = 2})
+        end
+    end
+})
+
+local fakeLagActive = false
+LagTab:AddToggle({
+    Name = "تقطيع الحركة (Fake Lag) 👻",
+    Default = false,
+    Callback = function(Value)
+        fakeLagActive = Value
+        task.spawn(function()
+            while fakeLagActive do
+                settings().Network.IncomingReplicationLag = 1
+                task.wait(0.1)
+                settings().Network.IncomingReplicationLag = 0
+                task.wait(0.1)
+            end
+            settings().Network.IncomingReplicationLag = 0
+        end)
+    end
+})
+
+-- 9. إعدادات السكربت ⚙️
+local SettingsTab = Window:MakeTab({Name = "إعدادات السكربت ⚙️", Icon = "rbxassetid://4483345998"})
+SettingsTab:AddButton({Name = "إعادة دخول (Rejoin)", Callback = function() game:GetService("TeleportService"):Teleport(game.PlaceId, game.Players.LocalPlayer) end})
+SettingsTab:AddButton({Name = "تبديل سيرفر (Server Hop)", Callback = function() local servers = game:GetService("HttpService"):JSONDecode(game:HttpGet("https://games.roblox.com/v1/games/" .. game.PlaceId .. "/servers/Public?sortOrder=Asc&limit=100")).data for _, s in pairs(servers) do if s.playing < s.maxPlayers and s.id ~= game.JobId then game:GetService("TeleportService"):TeleportToPlaceInstance(game.PlaceId, s.id, game.Players.LocalPlayer) break end end end})
+SettingsTab:AddButton({Name = "سيرفر صغير (Low Server)", Callback = function() local servers = game:GetService("HttpService"):JSONDecode(game:HttpGet("https://games.roblox.com/v1/games/" .. game.PlaceId .. "/servers/Public?sortOrder=Asc&limit=100")).data for _, s in pairs(servers) do if s.playing < 5 and s.id ~= game.JobId then game:GetService("TeleportService"):TeleportToPlaceInstance(game.PlaceId, s.id, game.Players.LocalPlayer) break end end end})
+SettingsTab:AddButton({Name = "إغلاق الواجهة", Callback = function() OrionLib:Destroy() end})
+
+-- 10. تبويب التواصل
+local ContactTab = Window:MakeTab({Name = "التواصل", Icon = "rbxassetid://4483345998"})
+ContactTab:AddButton({Name = "نسخ يوزر تيك توك", Callback = function() setclipboard(".nixor") OrionLib:MakeNotification({Name = "تم النسخ", Content = "يوزر المطور .nixor جاهز للإضافة", Time = 3}) end})
+
+OrionLib:Init()
